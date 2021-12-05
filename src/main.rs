@@ -14,7 +14,7 @@ fn main() -> io::Result<()> {
     let total_mem = items.nth(1).unwrap();
 
     let total_mem = get_mem(total_mem);
-    let output = format!("total mem: {} Gb", total_mem / NUM_OF_KBS_IN_ONE_GB);
+    let output = format!("total mem: {0:.2} Gb", total_mem / NUM_OF_KBS_IN_ONE_GB);
     println!("{}", output.color("blue").bold());
 
     let free_mem_line = lines.nth(0).expect("not correct file format");
