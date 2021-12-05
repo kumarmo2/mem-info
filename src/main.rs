@@ -1,5 +1,6 @@
 use std::fs;
 use std::io;
+ use colored::*;
 
 const MEM_INFO_PATH: &str = "/proc/meminfo";
 const NUM_OF_KBS_IN_ONE_GB: f32 = 1048576_f32;
@@ -13,20 +14,35 @@ fn main() -> io::Result<()> {
     let total_mem = items.nth(1).unwrap();
 
     let total_mem = get_mem(total_mem);
-    println!("total mem: {} Gb", total_mem / NUM_OF_KBS_IN_ONE_GB);
+    let output = format!("total mem: {} Gb", total_mem / NUM_OF_KBS_IN_ONE_GB);
+    println!("{}", output.color("blue").bold());
 
     let free_mem_line = lines.nth(0).expect("not correct file format");
     let mut items = free_mem_line.split(":").map(|a| a.trim());
 
     let free_mem = items.nth(1).unwrap();
     let free_mem = get_mem(free_mem);
-    println!("free mem: {0:.2} Gb", free_mem / NUM_OF_KBS_IN_ONE_GB);
+    let output = format!("free mem: {0:.2} Gb", free_mem / NUM_OF_KBS_IN_ONE_GB);
+    println!("{}", output.color("purple").bold());
 
 
-    println!("Percentage free: {0:.2}%", (free_mem / total_mem ) * 100_f32);
+    let percentage = (free_mem / total_mem ) * 100_f32;
+    let output = format!("Percentage free: {0:.2}%", percentage);
+    println!("{}", output.color(get_color(percentage)).bold());
 
     io::Result::Ok(())
 }
+
+fn get_color(free_percentage: f32) -> &'static str {
+    if free_percentage <= 20_f32 {
+        return "red"
+    }
+    if free_percentage <= 50_f32 {
+        return "yellow";
+    }
+    "green"
+}
+
 
 
 
