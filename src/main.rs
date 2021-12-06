@@ -1,11 +1,37 @@
+use colored::*;
+use crossterm::{
+    cursor::{MoveToColumn, MoveToRow, RestorePosition, SavePosition, Show},
+    execute,
+    terminal::{Clear, ClearType},
+    ExecutableCommand,
+};
 use std::fs;
-use std::io;
- use colored::*;
+use std::io::{self, stdout};
+use std::thread;
+use std::time::Duration;
 
 const MEM_INFO_PATH: &str = "/proc/meminfo";
 const NUM_OF_KBS_IN_ONE_GB: f32 = 1048576_f32;
 
 fn main() -> io::Result<()> {
+    let mut stdout = stdout();
+    let clear_all = Clear(ClearType::All);
+    for _ in 1..10 {
+        // Clear the terminal and move to top left before printing to terminal.
+        execute!(stdout, clear_all, MoveToColumn(0), MoveToRow(0))?;
+        read_mem_info_and_display_info()?;
+        thread::sleep(Duration::from_secs(2));
+    }
+
+    /*
+    execute!(stdout, Hide)?;
+    thread::sleep(Duration::from_secs(4));
+    execute!(stdout, Show)?;
+    */
+    io::Result::Ok(())
+}
+
+fn read_mem_info_and_display_info() -> io::Result<()> {
     let content = fs::read_to_string(MEM_INFO_PATH)?;
 
     let mut lines = content.split("\n").take(3);
@@ -25,8 +51,7 @@ fn main() -> io::Result<()> {
     let output = format!("free mem: {0:.2} Gb", free_mem / NUM_OF_KBS_IN_ONE_GB);
     println!("{}", output.color("purple").bold());
 
-
-    let percentage = (free_mem / total_mem ) * 100_f32;
+    let percentage = (free_mem / total_mem) * 100_f32;
     let output = format!("Percentage free: {0:.2}%", percentage);
     println!("{}", output.color(get_color(percentage)).bold());
 
@@ -35,7 +60,7 @@ fn main() -> io::Result<()> {
 
 fn get_color(free_percentage: f32) -> &'static str {
     if free_percentage <= 20_f32 {
-        return "red"
+        return "red";
     }
     if free_percentage <= 50_f32 {
         return "yellow";
@@ -43,12 +68,9 @@ fn get_color(free_percentage: f32) -> &'static str {
     "green"
 }
 
-
-
-
 fn get_mem(mem_str: &str) -> f32 {
     let index = mem_str.find(' ').unwrap();
-    let (free_mem, _ ) = mem_str.split_at(index);
+    let (free_mem, _) = mem_str.split_at(index);
     let free_mem = free_mem.parse::<f32>().unwrap();
     free_mem
 }
