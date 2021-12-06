@@ -15,19 +15,22 @@ const NUM_OF_KBS_IN_ONE_GB: f32 = 1048576_f32;
 
 fn main() -> io::Result<()> {
     let mut stdout = stdout();
-    let clear_all = Clear(ClearType::All);
-    for _ in 1..10 {
+    // let clear_all = Clear(ClearType::All);
+    let clear_down = Clear(ClearType::FromCursorDown);
+    execute!(stdout, SavePosition)?;
+    let n = 4;
+    for i in 1..n {
         // Clear the terminal and move to top left before printing to terminal.
-        execute!(stdout, clear_all, MoveToColumn(0), MoveToRow(0))?;
         read_mem_info_and_display_info()?;
         thread::sleep(Duration::from_secs(2));
-    }
 
+        if i != n - 1 {
+            execute!(stdout, RestorePosition, clear_down)?;
+        }
+    }
     /*
-    execute!(stdout, Hide)?;
-    thread::sleep(Duration::from_secs(4));
-    execute!(stdout, Show)?;
-    */
+     * TODO: handle sigint for graceful shutdown */
+
     io::Result::Ok(())
 }
 
