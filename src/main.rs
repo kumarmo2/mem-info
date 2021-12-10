@@ -13,6 +13,9 @@ use std::time::Duration;
 const MEM_INFO_PATH: &str = "/proc/meminfo";
 const NUM_OF_KBS_IN_ONE_GB: f32 = 1048576_f32;
 
+// TODO: currently if the cursor is at the end of the terminal view
+// and then u start the program. it outputs multiple lines instead
+// of updating the info in the same lines.
 fn main() -> io::Result<()> {
     let mut stdout = stdout();
     // let clear_all = Clear(ClearType::All);
@@ -43,22 +46,40 @@ fn read_mem_info_and_display_info() -> io::Result<()> {
     let total_mem = items.nth(1).unwrap();
 
     let total_mem = get_mem(total_mem);
-    let output = format!("total mem: {0:.2} Gb", total_mem / NUM_OF_KBS_IN_ONE_GB);
-    println!("{}", output.color("blue").bold());
-
     let free_mem_line = lines.nth(0).expect("not correct file format");
     let mut items = free_mem_line.split(":").map(|a| a.trim());
 
     let free_mem = items.nth(1).unwrap();
     let free_mem = get_mem(free_mem);
-    let output = format!("free mem: {0:.2} Gb", free_mem / NUM_OF_KBS_IN_ONE_GB);
-    println!("{}", output.color("purple").bold());
 
-    let percentage = (free_mem / total_mem) * 100_f32;
-    let output = format!("Percentage free: {0:.2}%", percentage);
-    println!("{}", output.color(get_color(percentage)).bold());
+    let used_mem_in_gb = (total_mem - free_mem) / NUM_OF_KBS_IN_ONE_GB;
+    let total_mem_in_gb = (total_mem) / NUM_OF_KBS_IN_ONE_GB;
+
+    let output = format!(
+        "used: {0:.2}/{1:.2}",
+        used_mem_in_gb,
+        (total_mem / NUM_OF_KBS_IN_ONE_GB)
+    );
+    println!(
+        "{}",
+        output
+            .color(get_color_for_used_memory_output(
+                used_mem_in_gb / total_mem_in_gb
+            ))
+            .bold()
+    );
 
     io::Result::Ok(())
+}
+
+fn get_color_for_used_memory_output(used_mem_fraction: f32) -> &'static str {
+    if used_mem_fraction >= 0.8 {
+        return "red";
+    }
+    if used_mem_fraction >= 0.4 {
+        return "yellow";
+    }
+    "green"
 }
 
 fn get_color(free_percentage: f32) -> &'static str {
